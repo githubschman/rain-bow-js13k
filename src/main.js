@@ -1,14 +1,28 @@
 var raf = require('./raf');
 var songs = require('./songs');
 
+// sounds
+var soundNotes = {
+  a: document.getElementById('a'),
+  A: document.getElementById('A'),
+  s: document.getElementById('s'),
+  S: document.getElementById('S'),
+  d: document.getElementById('d'),
+  D: document.getElementById('D'),
+  f: document.getElementById('f'),
+  F: document.getElementById('F'),
+}
+
 var canvas = document.querySelector('#game');
 var ctx = canvas.getContext('2d');
 
 var mode = {
   HOME: 0,
   SONG1: 1,
-  COMPOSE: 2,
-  CUSTOM: 3
+  SONG2: 2,
+  SONG3: 3,
+  COMPOSE: 4,
+  CUSTOM: 5
 };
 
 var selectedMode = mode.HOME;
@@ -35,13 +49,19 @@ setInterval(function() {
 }, 1);
 
 window.onkeypress = function(e) {
+
   if (keyInPlay || selectedMode === mode.COMPOSE) {
     activeKey = e.key;
   }
+
   // if compose mode, alternate high and low with shift key
   // play sound
   if (selectedMode === mode.COMPOSE && lanes[activeKey.toLowerCase()]) {
-    songs.CUSTOM.push({realNote: activeKey, key: activeKey.toLowerCase(), x: lanes[activeKey], y: -10, time: timeElapsed, color: '#4180ad', played: false});
+    var lowerkey = activeKey.toLowerCase(); 
+    songs.CUSTOM.push({realNote: activeKey, key: lowerkey, x: lanes[lowerkey], y: -10, time: timeElapsed, color: '#4180ad', played: false});
+    soundNotes[activeKey].pause();
+    soundNotes[activeKey].currentTime = 0;
+    soundNotes[activeKey].play();
   }
 
   if (activeKey != null) {
@@ -73,12 +93,16 @@ modeButtons.forEach(function(button) {
     var id = event.srcElement.id;
     timeElapsed = 0;
     selectedMode = mode[id];
+    console.log('mode is ' + selectedMode);
     if (selectedMode === mode.COMPOSE) {
       songs.CUSTOM = [];
     }
     // make a mad deep copy so you can replay
     selectedSong = songs[id] && JSON.parse(JSON.stringify(songs[id].slice(0)));
     backDrops = makeBackgroundDrops();
+    if (songs.CUSTOM.length > 0) {
+      console.log('your saved custom song:', songs.CUSTOM);
+    }
   });
 });
 
@@ -161,6 +185,9 @@ raf.start(function(elapsed) {
           activeKey = null;
           if (!note.played) {
             notesPlayed++;
+            soundNotes[note.realNote].pause();
+            soundNotes[note.realNote].currentTime = 0;
+            soundNotes[note.realNote].play();
           }
           // play note.realNote
           note.played = true;
@@ -177,7 +204,6 @@ raf.start(function(elapsed) {
           }
           notesMissed++;
         }
-        // play bad key sound
         note.dead = true;
       }
   
