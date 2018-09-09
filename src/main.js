@@ -1,7 +1,7 @@
 var raf = require('./raf');
 var songs = require('./songs');
 
-// sounds
+// sounds from the html
 var soundNotes = {
   a: document.getElementById('a'),
   A: document.getElementById('A'),
@@ -16,6 +16,7 @@ var soundNotes = {
 var canvas = document.querySelector('#game');
 var ctx = canvas.getContext('2d');
 
+// modes control which song is playing (if any)
 var mode = {
   HOME: 0,
   SONG1: 1,
@@ -28,15 +29,19 @@ var mode = {
 var selectedMode = mode.HOME;
 var selectedSong = songs.SONG1;
 
+// drops in the background
 var backDrops = [];
 
 var timeElapsed = 0;
 var keyInPlay = false;
 var activeKey = null;
 
+// this is the accuracy display
+var chanceOfRain = document.getElementById('chance');
 var notesPlayed = 0;
 var notesMissed = 0;
 
+// the x values of the lanes
 var lanes = {
   a: 100,
   s: 300,
@@ -44,14 +49,21 @@ var lanes = {
   f: 700
 }
 
+// how much time has passed since the song started
 setInterval(function() {
   timeElapsed += 1;
 }, 1);
 
+//
 window.onkeypress = function(e) {
 
   if (keyInPlay || selectedMode === mode.COMPOSE) {
     activeKey = e.key;
+  }
+
+  // custom songs time elapsed starts at 1000 on first key hit
+  if (selectedMode === mode.COMPOSE && songs.CUSTOM.length < 1) {
+    timeElapsed = 1000;
   }
 
   // if compose mode, alternate high and low with shift key
@@ -90,21 +102,51 @@ function createDrop() {
 var modeButtons = document.querySelectorAll('button');
 modeButtons.forEach(function(button) {
   button.addEventListener('click', function(event) {
+    notesMissed = 0;
+    notesPlayed = 0;
     var id = event.srcElement.id;
     timeElapsed = 0;
-    selectedMode = mode[id];
-    console.log('mode is ' + selectedMode);
-    if (selectedMode === mode.COMPOSE) {
-      songs.CUSTOM = [];
-    }
-    // make a mad deep copy so you can replay
-    selectedSong = songs[id] && JSON.parse(JSON.stringify(songs[id].slice(0)));
-    backDrops = makeBackgroundDrops();
-    if (songs.CUSTOM.length > 0) {
-      console.log('your saved custom song:', songs.CUSTOM);
+    if (mode[id]) {
+      selectedMode = mode[id];
+      if (selectedMode === mode.COMPOSE) {
+        songs.CUSTOM = [];
+      }
+      // make a mad deep copy so you can replay
+      selectedSong = songs[id] && JSON.parse(JSON.stringify(songs[id].slice(0)));
+      backDrops = makeBackgroundDrops();
+      if (songs.CUSTOM.length > 0) {
+        // ***
+        // If you pulled this repo want to author your own songs,
+        // uncomment the line below and you can grab your song from the 
+        // console and put it into songs.js!
+        // ***
+        // console.log('Your saved custom song:', songs.CUSTOM);
+      }
+      chanceOfRain.innerHTML = '';
+    } else if (id === 'howto') {
+      selectedMode = mode.HOME;
+      var instructions = document.getElementById('instructions');
+      var gamebuttons = document.getElementById('game-buttons');
+      instructions.style.display = 'block';
+      gamebuttons.style.display = 'none';
+    } else if (id === 'back') {
+      selectedMode = mode.HOME;
+      var instructions = document.getElementById('instructions');
+      var gamebuttons = document.getElementById('game-buttons');
+      instructions.style.display = 'none';
+      gamebuttons.style.display = 'block';
     }
   });
 });
+
+function updateAccuracy() {
+  let total = notesPlayed + notesMissed;
+  if (total > 0) {
+    chanceOfRain.innerHTML = '<h3>' + Math.round((notesPlayed / total) * 100) + '% accuracy</h3>';
+  } else {
+    chanceOfRain.innterHTML = '';
+  }
+}
 
 backDrops = makeBackgroundDrops();
 
@@ -184,10 +226,11 @@ raf.start(function(elapsed) {
           note.color = '#93bedd';
           activeKey = null;
           if (!note.played) {
-            notesPlayed++;
             soundNotes[note.realNote].pause();
             soundNotes[note.realNote].currentTime = 0;
             soundNotes[note.realNote].play();
+            notesPlayed++;
+            updateAccuracy();
           }
           // play note.realNote
           note.played = true;
@@ -203,10 +246,11 @@ raf.start(function(elapsed) {
             z++;
           }
           notesMissed++;
+          updateAccuracy();
         }
         note.dead = true;
       }
-  
+
       ctx.fillStyle = note.color;
       ctx.fill();
   
