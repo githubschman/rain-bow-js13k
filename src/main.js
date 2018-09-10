@@ -63,7 +63,7 @@ window.onkeypress = function(e) {
 
   // custom songs time elapsed starts at 1000 on first key hit
   if (selectedMode === mode.COMPOSE && songs.CUSTOM.length < 1) {
-    timeElapsed = 1000;
+    timeElapsed = 800;
   }
 
   // if compose mode, alternate high and low with shift key
@@ -140,7 +140,7 @@ modeButtons.forEach(function(button) {
 });
 
 function updateAccuracy() {
-  let total = notesPlayed + notesMissed;
+  var total = notesPlayed + notesMissed;
   if (total > 0) {
     chanceOfRain.innerHTML = '<h3>' + Math.round((notesPlayed / total) * 100) + '% accuracy</h3>';
   } else {
@@ -222,7 +222,7 @@ raf.start(function(elapsed) {
       if (note.y >= canvas.height - 110 && note.y <= canvas.height - 30) {
         keyInPlay = true;
         // player has a sec to press the button
-        if (activeKey === note.key) {
+        if (activeKey && (activeKey === note.key || activeKey.toLowerCase() === note.key)) {
           note.color = '#93bedd';
           activeKey = null;
           if (!note.played) {
