@@ -63,7 +63,7 @@ window.onkeypress = function(e) {
 
   // custom songs time elapsed starts at 1000 on first key hit
   if (selectedMode === mode.COMPOSE && songs.CUSTOM.length < 1) {
-    timeElapsed = 800;
+    timeElapsed = 300;
   }
 
   // if compose mode, alternate high and low with shift key
